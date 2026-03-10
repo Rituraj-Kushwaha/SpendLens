@@ -1,0 +1,864 @@
+/* Keep entry motion but avoid transform on parent so fixed modals stay viewport-centered */
+.bills-page-enter {
+    animation: billsFadeIn 220ms ease-out forwards;
+}
+
+@keyframes billsFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ─── Bills Page Layout ──────────────────────────────────────────────────── */
+.bills-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.bills-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.bills-header__sub {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.bills-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* ─── Search ─────────────────────────────────────────────────────────────── */
+.bills-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.bills-search__icon {
+    position: absolute;
+    left: 0.75rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.bills-search__input {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-primary);
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+    font-size: 0.875rem;
+    width: 220px;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+
+.bills-search__input::placeholder {
+    color: var(--text-muted);
+}
+
+.bills-search__input:focus {
+    border-color: var(--accent-main);
+}
+
+/* ─── Tabs ───────────────────────────────────────────────────────────────── */
+.bills-filters {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.bills-filter-tab {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    font-family: inherit;
+}
+
+.bills-filter-tab:hover {
+    color: var(--text-primary);
+}
+
+.bills-filter-tab--active {
+    color: var(--accent-main);
+    border-bottom-color: var(--accent-main);
+    font-weight: 600;
+}
+
+/* ─── Table ──────────────────────────────────────────────────────────────── */
+.bills-table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.bills-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.bills-table thead tr {
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+}
+
+.bills-table th {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.bills-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+}
+
+.bills-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.bills-table tbody tr:hover {
+    background: var(--bg-elevated);
+}
+
+.bills-table td {
+    padding: 0.9rem 1rem;
+    vertical-align: middle;
+    color: var(--text-primary);
+}
+
+.bills-row--overdue {
+    background: rgba(224, 90, 90, 0.04);
+}
+
+.bills-row--overdue:hover {
+    background: rgba(224, 90, 90, 0.08) !important;
+}
+
+.bills-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.bills-amount {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ─── Due Badge ──────────────────────────────────────────────────────────── */
+.bills-due-tag {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.bills-due-tag--overdue {
+    background: rgba(224, 90, 90, 0.15);
+    color: var(--accent-red);
+    border: 1px solid rgba(224, 90, 90, 0.3);
+}
+
+.bills-due-tag--today {
+    background: rgba(232, 197, 71, 0.15);
+    color: var(--accent-main);
+    border: 1px solid rgba(232, 197, 71, 0.3);
+}
+
+.bills-due-tag--soon {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.bills-due-tag--paid {
+    background: rgba(76, 175, 130, 0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(76, 175, 130, 0.3);
+}
+
+.bills-due-tag--normal {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+/* ─── Action Buttons ─────────────────────────────────────────────────────── */
+.bills-row__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bills-btn-pay {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.4rem 0.875rem;
+    border-radius: 8px;
+    background: var(--accent-green);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: opacity 0.15s, transform 0.1s;
+    font-family: inherit;
+}
+
+.bills-btn-pay:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+.bills-btn-del {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem;
+    border-radius: 8px;
+    background: none;
+    color: var(--accent-red);
+    border: 1px solid rgba(224, 90, 90, 0.4);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.bills-btn-del:hover {
+    background: var(--accent-red);
+    color: #fff;
+    border-color: var(--accent-red);
+}
+
+.bills-cat-badge {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    border: 1px solid var(--border);
+}
+
+/* ─── Empty / Loading States ─────────────────────────────────────────────── */
+.bills-loading {
+    text-align: center;
+    padding: 4rem;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+}
+
+.bills-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ─── Modal Overlay & Box ────────────────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.04);
+    animation: modalIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-box--small {
+    max-width: 400px;
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ─── Modal Header ───────────────────────────────────────────────────────── */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem 0;
+}
+
+.modal-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.modal-progress {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.modal-progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-progress-dot--active {
+    background: var(--accent-main);
+    width: 22px;
+    border-radius: 4px;
+}
+
+.modal-progress-dot--done {
+    background: var(--accent-green);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    transition: all 0.15s;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+}
+
+/* ─── Modal Body & Footer ────────────────────────────────────────────────── */
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    border-top: 1px solid var(--border);
+    background: var(--bg-elevated);
+    border-radius: 0 0 20px 20px;
+}
+
+/* ─── Modal Step Content ─────────────────────────────────────────────────── */
+.modal-step h3 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    color: var(--text-primary);
+}
+
+.modal-hint {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0.5rem 0;
+    line-height: 1.5;
+}
+
+.modal-label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    margin-top: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ─── Modal Inputs ───────────────────────────────────────────────────────── */
+.modal-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 0.75rem;
+    font-family: inherit;
+}
+
+.modal-input:focus {
+    border-color: var(--accent-main);
+    box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.12);
+}
+
+.modal-input::placeholder {
+    color: var(--text-muted);
+}
+
+.modal-textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.modal-amount-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 0.5rem 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modal-amount-wrap:focus-within {
+    border-color: var(--accent-main);
+    box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.12);
+}
+
+.modal-currency {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.modal-input--amount {
+    font-size: 2.25rem;
+    font-weight: 700;
+    text-align: right;
+    padding: 0.25rem 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.modal-input--amount:focus {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+/* ─── Category Grid ──────────────────────────────────────────────────────── */
+.modal-cat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.modal-cat-chip {
+    padding: 0.45rem 1rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.modal-cat-chip:hover {
+    border-color: var(--accent-main);
+    color: var(--accent-main);
+    background: rgba(232, 197, 71, 0.08);
+}
+
+.modal-cat-chip--active {
+    background: var(--accent-main);
+    color: #000;
+    border-color: var(--accent-main);
+    font-weight: 600;
+}
+
+.modal-cat-chip--add {
+    border-style: dashed;
+    color: var(--accent-main);
+    background: rgba(232, 197, 71, 0.06);
+}
+
+.modal-cat-chip--add:hover {
+    background: rgba(232, 197, 71, 0.12);
+}
+
+.modal-cat-new {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: flex-start;
+}
+
+.modal-cat-new .modal-input {
+    margin-bottom: 0;
+}
+
+/* ─── Frequency Cards ────────────────────────────────────────────────────── */
+.modal-freq-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+
+.modal-freq-card {
+    padding: 1rem;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.modal-freq-card:hover {
+    border-color: var(--accent-main);
+    background: rgba(232, 197, 71, 0.06);
+}
+
+.modal-freq-card--active {
+    border-color: var(--accent-main);
+    background: rgba(232, 197, 71, 0.1);
+    box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.1);
+}
+
+.modal-freq-card__name {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.modal-freq-card__desc {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-top: 3px;
+    line-height: 1.4;
+}
+
+.modal-custom-interval {
+    margin-top: 0.75rem;
+}
+
+.modal-custom-interval label {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    margin-bottom: 0.3rem;
+    display: block;
+}
+
+/* ─── Tenure Options ─────────────────────────────────────────────────────── */
+.modal-tenure-opt {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 1rem;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    cursor: pointer;
+    margin-bottom: 0.6rem;
+    color: var(--text-primary);
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.modal-tenure-opt:hover {
+    border-color: var(--accent-main);
+}
+
+.modal-tenure-opt strong {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.modal-tenure-opt span {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-tenure-opt--active {
+    border-color: var(--accent-main);
+    background: rgba(232, 197, 71, 0.08);
+    box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.1);
+}
+
+.modal-tenure-input {
+    width: 70px;
+    padding: 0.3rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.modal-tenure-input:focus {
+    border-color: var(--accent-main);
+}
+
+/* ─── Confirmation Screen ────────────────────────────────────────────────── */
+.modal-confirm-icon {
+    font-size: 3.5rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.modal-preview-dates {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: var(--bg-elevated);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.modal-preview-dates strong {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.modal-preview-date {
+    padding: 0.35rem 0;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-preview-date:last-child {
+    border-bottom: none;
+}
+
+/* ─── Duplicate Warning ──────────────────────────────────────────────────── */
+.modal-dupe-warn {
+    margin: 0 1.5rem 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+}
+
+.modal-dupe-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    justify-content: flex-end;
+}
+
+/* ─── Payment Methods ────────────────────────────────────────────────────── */
+.modal-methods {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+}
+
+.modal-method-chip {
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.modal-method-chip:hover {
+    border-color: var(--accent-main);
+    color: var(--accent-main);
+}
+
+.modal-method-chip--active {
+    background: var(--accent-main);
+    color: #000;
+    border-color: var(--accent-main);
+    font-weight: 600;
+}
+
+/* ─── Notification Bell ──────────────────────────────────────────────────── */
+.notif-bell-wrap { position: relative; }
+
+.notif-bell-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    transition: color 0.15s;
+}
+
+.notif-bell-btn:hover { color: var(--text-primary); }
+
+.notif-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--accent-red);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 1px 5px;
+    min-width: 16px;
+    text-align: center;
+}
+
+.notif-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 340px;
+    max-height: 420px;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    z-index: 200;
+}
+
+.notif-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.notif-item {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.notif-item:hover { background: var(--bg-elevated); }
+
+.notif-item--unread {
+    background: rgba(232, 197, 71, 0.05);
+}
+
+.notif-item__msg {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+}
+
+.notif-item__time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.notif-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .bills-header {
+        flex-direction: column;
+    }
+
+    .bills-header__actions {
+        width: 100%;
+    }
+
+    .bills-search__input {
+        width: 100%;
+        flex: 1;
+    }
+
+    .bills-table th:nth-child(2),
+    .bills-table td:nth-child(2) {
+        display: none;
+    }
+
+    .modal-freq-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-box {
+        max-height: 95vh;
+    }
+}

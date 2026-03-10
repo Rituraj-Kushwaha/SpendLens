@@ -1,0 +1,129 @@
+.form-input {
+    position: relative;
+    margin-bottom: 4px;
+}
+
+.form-input__wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.form-input__field {
+    width: 100%;
+    height: 52px;
+    padding: 20px 16px 8px;
+    background: var(--bg-elevated);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    transition: all 200ms ease;
+}
+
+.form-input__field::placeholder {
+    color: transparent;
+}
+
+.form-input__textarea {
+    height: auto;
+    min-height: 80px;
+    resize: vertical;
+    padding-top: 24px;
+    line-height: 1.5;
+}
+
+.form-input__field--has-prefix {
+    padding-left: 36px;
+}
+
+/* Floating Label */
+.form-input__label {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: all 200ms ease;
+    background: transparent;
+}
+
+.form-input__label--has-prefix {
+    left: 36px;
+}
+
+.form-input__textarea~.form-input__label {
+    top: 16px;
+    transform: none;
+}
+
+.form-input__field--has-value~.form-input__label,
+.form-input__field:focus~.form-input__label {
+    top: 8px;
+    transform: none;
+    font-size: 0.6875rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Focus State */
+.form-input--focused .form-input__field {
+    border-color: var(--accent-main);
+    box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.15);
+}
+
+.form-input--focused .form-input__label {
+    color: var(--accent-main);
+}
+
+/* Error State */
+.form-input--error .form-input__field {
+    border-color: var(--accent-red);
+}
+
+.form-input__error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    color: var(--accent-red);
+    font-size: 0.8125rem;
+    animation: fadeSlideUp 150ms ease;
+}
+
+/* Prefix */
+.form-input__prefix {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    z-index: 1;
+}
+
+/* Password Toggle */
+.form-input__toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--text-muted);
+}
+
+.form-input__toggle:hover {
+    color: var(--text-secondary);
+    background: var(--bg-card);
+}

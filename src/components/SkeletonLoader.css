@@ -1,0 +1,32 @@
+.skeleton-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.skeleton--text {
+    height: 16px;
+    width: 100%;
+}
+
+.skeleton--text:last-child:not(:first-child) {
+    width: 65%;
+}
+
+.skeleton--circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.skeleton--card {
+    height: 120px;
+    width: 100%;
+    border-radius: 16px;
+}
+
+.skeleton--chart {
+    height: 200px;
+    width: 100%;
+    border-radius: 16px;
+}

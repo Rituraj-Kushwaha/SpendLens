@@ -1,0 +1,35 @@
+export const mockAnalytics = {
+    monthlyTrend: [
+        { month: 'Oct', amount: 4200, lastYear: 3800 },
+        { month: 'Nov', amount: 3900, lastYear: 4100 },
+        { month: 'Dec', amount: 4800, lastYear: 4600 },
+        { month: 'Jan', amount: 3600, lastYear: 3400 },
+        { month: 'Feb', amount: 3250, lastYear: 3700 },
+        { month: 'Mar', amount: 3517, lastYear: 3900 },
+    ],
+    categoryBreakdown: [
+        { category: 'Utilities', amount: 2930, percentage: 34 },
+        { category: 'OTT', amount: 746, percentage: 14 },
+        { category: 'Internet', amount: 999, percentage: 12 },
+        { category: 'Mobile', amount: 299, percentage: 6 },
+        { category: 'Rent', amount: 15000, percentage: 24 },
+        { category: 'Other', amount: 5000, percentage: 10 },
+    ],
+    subscriptionCosts: [
+        { name: 'Netflix', amount: 199, color: '#E05A5F' },
+        { name: 'Spotify', amount: 119, color: '#1DB954' },
+        { name: 'Disney+ Hotstar', amount: 25, color: '#113CCF' },
+        { name: 'YouTube Premium', amount: 129, color: '#FF0000' },
+        { name: 'JioFiber', amount: 999, color: '#0A3A8C' },
+        { name: 'Airtel Mobile', amount: 299, color: '#ED1C24' },
+    ],
+    weeklySpend: [
+        { day: 'Mon', amount: 420 },
+        { day: 'Tue', amount: 380 },
+        { day: 'Wed', amount: 610 },
+        { day: 'Thu', amount: 290 },
+        { day: 'Fri', amount: 520 },
+        { day: 'Sat', amount: 780 },
+        { day: 'Sun', amount: 517 },
+    ],
+};
