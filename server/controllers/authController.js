@@ -4,13 +4,18 @@ const { createAccessToken, createRefreshToken, hashToken } = require('../utils/g
 const userService = require('../services/userService');
 const jwt = require('jsonwebtoken');
 
-const setRefreshCookie = (res, token) => {
-    res.cookie('refreshToken', token, {
+const getRefreshCookieOptions = () => {
+    const isProd = process.env.NODE_ENV === 'production';
+    return {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'Strict',
+        secure: isProd,
+        sameSite: isProd ? 'None' : 'Lax',
         maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    };
+};
+
+const setRefreshCookie = (res, token) => {
+    res.cookie('refreshToken', token, getRefreshCookieOptions());
 };
 
 // POST /api/auth/register
@@ -87,7 +92,7 @@ const refreshTokenHandler = catchAsync(async (req, res, next) => {
 const logout = catchAsync(async (req, res) => {
     const token = req.cookies.refreshToken;
     if (token) await userService.deleteRefreshToken(hashToken(token));
-    res.clearCookie('refreshToken');
+    res.clearCookie('refreshToken', getRefreshCookieOptions());
     res.status(200).json({ success: true, data: null, error: null });
 });
 
@@ -126,7 +131,7 @@ const changePassword = catchAsync(async (req, res, next) => {
 // DELETE /api/auth/me
 const deleteAccount = catchAsync(async (req, res) => {
     await userService.deleteAccount(req.user.userId);
-    res.clearCookie('refreshToken');
+    res.clearCookie('refreshToken', getRefreshCookieOptions());
     res.status(200).json({ success: true, data: null, error: null });
 });
 

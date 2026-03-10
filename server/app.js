@@ -13,6 +13,15 @@ const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 
+const parseAllowedOrigins = () => {
+    // Supports comma-separated values in CLIENT_ORIGIN for production + preview URLs.
+    const raw = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+    return raw
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+};
+
 // ── Security & Parsing ──────────────────────────────────────────────────────
 app.use(helmet());
 app.use(express.json({ limit: '10kb' }));
@@ -20,10 +29,17 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // ── CORS ──────────────────────────────────────────────────────────────────
+const allowedOrigins = parseAllowedOrigins();
 app.use(cors({
-    origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        // Allow non-browser requests (no Origin header) and explicit allowlist.
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
 
 // ── Rate Limiting ──────────────────────────────────────────────────────────
