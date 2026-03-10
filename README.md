@@ -1,167 +1,253 @@
-# 🔍 SpendLens
+# SpendLens
 
-> **Finally know where your money actually goes.**
+SpendLens is a full-stack personal finance application for managing recurring bills, tracking paid transactions, and generating spending analytics from confirmed payments.
 
-SpendLens is a premium personal finance tracking and subscription management dashboard. Built with a modern **MERN stack**, it combines a beautiful, responsive frontend with a robust, secure backend featuring automated daily alerts, advanced analytics aggregation, and intelligent subscription detection.
+This README reflects the current implementation in this repository (React + Vite frontend, Express + PostgreSQL backend).
 
-[![React](https://img.shields.io/badge/React-18.x-blue.svg?logo=react)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF.svg?logo=vite)](https://vitejs.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg?logo=nodedotjs)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-4.x-lightgrey.svg?logo=express)](https://expressjs.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-8.x-47A248.svg?logo=mongodb)](https://www.mongodb.com/)
+## System Overview
 
----
+- Frontend: `React 19`, `Vite 7`, `react-router-dom 7`, `axios`, `recharts`
+- Backend: `Node.js`, `Express 4`, `pg`, `jsonwebtoken`, `bcryptjs`, `node-cron`, `nodemailer`
+- Database: PostgreSQL (designed for Supabase-hosted Postgres, but works with any PostgreSQL instance)
+- Auth model: access token is kept in memory on the client, refresh token is sent as `httpOnly` cookie and stored hashed in DB.
 
-## ✨ Key Features
+## Repository Structure
 
-- **Global Currency Switcher**: View your finances in **INR (₹)**, **USD ($)**, **EUR (€)**, or **GBP (£)**. Applies globally across the dashboard, bills, and analytics in real-time.
-- **Intelligent Alert Engine**: A daily Node.js cron job that automatically detects:
-  - Upcoming due dates (sending branded HTML email reminders)
-  - Overdue bills (auto-updating status to `overdue`)
-  - Overspending (triggers if current month spend is 30% higher than the 3-month average)
-  - Duplicate subscriptions (fuzzy matching names within the same category)
-- **Advanced Analytics**: MongoDB aggregation pipelines deliver monthly spending trends, category breakdowns, and normalized subscriptions (annual/quarterly normalized to monthly equivalents).
-- **Secure Authentication**: Dual JWT architecture. 15-minute access tokens kept solely in memory, combined with 7-day SHA-256 hashed refresh tokens stored in `httpOnly` cookies.
-- **Premium UI/UX**: Built entirely without UI libraries using Vanilla CSS. Features a custom theme system (Dark/Light mode via `data-theme`), animated skeleton loaders, glassmorphism, and Recharts integration.
+```text
+/
+  src/                # Frontend (Vite React app)
+  server/             # Backend (Express API + PostgreSQL access)
+    migrations/       # SQL schema bootstrap
+    routes/           # Express route modules
+    controllers/      # HTTP handlers
+    services/         # Data access/business logic
+```
 
----
+## Runtime Architecture
 
-## 🛠 Tech Stack
+### Frontend
 
-### Frontend (`/client`)
-- **Framework**: React 18 + Vite
-- **Routing**: React Router DOM v6
-- **Styling**: Vanilla CSS (CSS Variables, Flexbox/Grid, Custom Data Themes)
-- **Data Visualization**: Recharts
-- **Icons**: Lucide React
-- **API Client**: Axios (with centralized request/response interceptors for silent token refresh)
+- Root composition in `src/App.jsx`:
+- Providers: `AuthProvider -> ThemeProvider -> CurrencyProvider -> ToastProvider`
+- Router:
+- Public route: `/` (`AuthPage`)
+- Protected routes: `/dashboard`, `/bills`, `/analytics`, `/alerts`, `/settings`
+- Session bootstrap in `src/context/AuthContext.jsx`:
+- On app mount: `POST /auth/refresh` using refresh cookie
+- On success: store new access token in memory and fetch `GET /auth/me`
+- API client in `src/services/api.js`:
+- Global Axios instance with `withCredentials: true`
+- Request interceptor injects `Authorization: Bearer <accessToken>`
+- Response interceptor queues failed requests during token refresh (`isRefreshing` + `failedQueue`)
 
-### Backend (`/server`)
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB Atlas + Mongoose ODM
-- **Authentication**: JWT, bcryptjs
-- **Validation**: express-validator
-- **Security**: Helmet, express-rate-limit, CORS
-- **Jobs Engine**: node-cron
-- **Email**: Nodemailer (SMTP transport)
+### Backend
 
----
+- App assembly in `server/app.js`:
+- Security middleware: `helmet`, CORS, auth rate limits
+- Routes mounted at `/api/*`
+- Health endpoint: `GET /api/health` checks DB connectivity
+- Error path:
+- `notFoundHandler` creates `AppError`
+- `globalErrorHandler` maps operational JWT/validation errors
+- Startup in `server/server.js`:
+- Loads env, verifies PostgreSQL with `testConnection()`
+- Starts HTTP listener
+- Starts scheduled alert checker job
 
-## 🏗 Architecture
+## Database Model (PostgreSQL)
 
-### Backend Security Integration
-- **Token Rotation**: On every `/api/auth/refresh`, the old refresh token is deleted from the DB and a new pair is issued.
-- **Auto-Cleanup**: The `RefreshToken` Mongoose schema uses a TTL (Time-To-Live) index to automatically have MongoDB background threads clean up expired sessions.
-- **Rate Limiting**: The `/api/auth/*` endpoints are strictly limited to 10 requests per 15 minutes per IP to prevent brute-force attacks.
-- **Sanitized Responses**: Passwords are never sent back in API responses (handled via Mongoose `select: false` and a `toJSON` transform).
+Schema is created by `server/migrations/001_init.sql`.
 
-### Frontend State Management
-- **Context API**: Used for global states like `ThemeContext`, `AuthContext`, `ToastContext`, and `CurrencyContext`.
-- **Silent Refresh**: On app load, `AuthContext` makes a silent `GET /api/auth/me` request using the `httpOnly` refresh cookie. If valid, the user is logged in perfectly without storing tokens in `localStorage` (preventing XSS).
+Core tables:
 
----
+- `users`: profile + preferences (`monthly_budget`, `currency`, `theme`, `notification_prefs` JSONB)
+- `refresh_tokens`: hashed refresh token store, single-session behavior enforced in service layer
+- `categories`: system categories (`is_default = true`) + user-defined categories
+- `bills`: bill definitions (recurrence metadata, soft-delete flag)
+- `bill_schedules`: generated occurrences with status (`pending`, `paid`, `overdue`, `skipped`)
+- `transactions`: immutable payment records; analytics source of truth
+- `notifications`: alert/notification feed for users
 
-## 🛣 API Endpoints
+Important domain rule:
 
-### Auth `(/api/auth)`
-- `POST /register` - Register new user
-- `POST /login` - Local authentication
-- `POST /refresh` - Refresh access token via cookie
-- `POST /logout` - Clear cookies and DB session
-- `GET /me` - Get current user profile (Protected)
+- Analytics calculations read from `transactions`, not from all scheduled bills.
+- Only confirmed payments are considered spending.
 
-### Bills `(/api/bills)` *All Protected*
-- `GET /` - List bills (supports filtering, sorting, pagination)
-- `POST /` - Create a new bill (auto-triggers near-term alerts)
-- `GET /:id` - Get specific bill
-- `PUT /:id` - Update bill (auto-refreshes alerts on due date change)
-- `DELETE /:id` - Delete bill and its associated alerts
+## Scheduling and Recurrence Engine
 
-### Analytics `(/api/analytics)` *All Protected*
-- `GET /summary` - Combined dashboard macro stats
-- `GET /monthly` - 6-month spending trend via aggregations
-- `GET /category` - Percentage breakdown by category
-- `GET /subscriptions` - Normalized recurring costs
+Implemented in `server/services/scheduleService.js` and `server/services/transactionService.js`.
 
-### Alerts `(/api/alerts)` *All Protected*
-- `GET /` - Fetch user's alert feed (unread first)
-- `PATCH /read-all` - Mark all alerts as read
-- `PATCH /:id/read` - Mark single alert as read
-- `DELETE /:id` - Soft delete (dismiss) an alert
+- On bill creation (`POST /api/bills`): schedules are generated upfront based on `frequency`, `tenure`, `interval_days`
+- For open-ended recurrence (`tenure = null`): bounded lookahead is generated (for example monthly defaults to 24 occurrences)
+- On payment confirmation (`POST /api/bills/pay`):
+- schedule is row-locked (`FOR UPDATE`)
+- status flips to `paid`
+- transaction is inserted atomically
+- next occurrence is created if needed for infinite recurring bills
+- Daily cron (`server/jobs/alertChecker.js`):
+- marks overdue schedules
+- creates due reminders for schedules due in `0`, `1`, or `3` days
+- tops up infinite recurring bills when pending future schedules drop below threshold
 
----
+## API Reference
 
-## 🚀 Installation & Setup
+Base URL (default): `http://localhost:5000/api`
 
-### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB Atlas Account (or local MongoDB instance)
-- Gmail / SendGrid account (for Nodemailer)
+All endpoints return JSON. Current code uses two response envelopes depending on code path:
 
-### 1. Clone the repository
-\`\`\`bash
-git clone https://github.com/yourusername/spendlens.git
-cd spendlens
-\`\`\`
+- Success (most controllers): `{ success, data, error }`
+- Error middleware format: `{ status, message, ... }`
 
-### 2. Install Dependencies
-You need to install dependencies for both the frontend root and the backend server.
+### Auth
 
-\`\`\`bash
-# Install frontend packages
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/logout`
+- `GET /auth/me` (protected)
+- `PATCH /auth/me` (protected)
+- `PATCH /auth/password` (protected)
+- `DELETE /auth/me` (protected)
+
+### Bills (protected)
+
+- `GET /bills`
+- `POST /bills`
+- `GET /bills/:id`
+- `PUT /bills/:id`
+- `DELETE /bills/:id`
+- Query mode:
+- `mode=future` (default): delete future pending schedules + soft-delete bill
+- `mode=single`: requires `scheduleId` in body, marks one schedule as skipped
+- `POST /bills/pay` (mark schedule paid and create transaction)
+- `GET /bills/dashboard` (pending/overdue + paid this month)
+- `GET /bills/categories`
+- `POST /bills/categories`
+
+### Analytics (protected)
+
+- `GET /analytics/summary`
+- `GET /analytics/category?month=YYYY-MM`
+- `GET /analytics/monthly?months=12`
+- `GET /analytics/insights`
+- `GET /analytics/subscriptions`
+- `GET /analytics/transactions`
+
+### Alerts (protected)
+
+- `GET /alerts`
+- `PATCH /alerts/read-all`
+- `PATCH /alerts/:id/read`
+- `DELETE /alerts/:id`
+
+### Notifications (protected)
+
+- `GET /notifications`
+- `POST /notifications/read-all`
+- `POST /notifications/:id/read`
+
+### Health
+
+- `GET /health`
+
+## Local Development
+
+### 1. Install dependencies
+
+From repo root:
+
+```bash
 npm install
+```
 
-# Install backend packages
+From backend folder:
+
+```bash
 cd server
 npm install
-cd ..
-\`\`\`
+```
 
-### 3. Environment Variables
-Navigate to the `server/` directory, copy the example `.env` file, and fill in your details.
+### 2. Configure environment
 
-\`\`\`bash
-cd server
-cp .env.example .env
-\`\`\`
+Create `server/.env` from `server/.env.example`.
 
-Ensure you define the following inside `server/.env`:
-\`\`\`env
+Required keys:
+
+```env
 NODE_ENV=development
 PORT=5000
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.monyx.mongodb.net/spendlens
-JWT_ACCESS_SECRET=your_super_secret_access_string (generate via openssl rand -hex 64)
-JWT_REFRESH_SECRET=your_super_secret_refresh_string
+DATABASE_URL=postgresql://...
+JWT_ACCESS_SECRET=...
+JWT_REFRESH_SECRET=...
+JWT_ACCESS_EXPIRES=15m
+JWT_REFRESH_EXPIRES=7d
 CLIENT_ORIGIN=http://localhost:5173
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-google-app-password
-ALERT_CHECK_CRON=0 9 * * *
-\`\`\`
+EMAIL_USER=...
+EMAIL_PASS=...
+EMAIL_FROM=SpendLens <noreply@spendlens.app>
+ALERT_CHECK_CRON=0 8 * * *
+```
 
-### 4. Running the App (Development)
+### 3. Run database migration
 
-Open two terminal windows.
+```bash
+cd server
+node run-migration.js
+```
 
-**Terminal 1 (Backend Server):**
-\`\`\`bash
+### 4. Start backend
+
+```bash
 cd server
 npm run dev
-# The backend should start on port 5000 and connect to MongoDB.
-\`\`\`
+```
 
-**Terminal 2 (Frontend Client):**
-\`\`\`bash
-# From the root directory
+### 5. Start frontend
+
+```bash
+# in repo root
 npm run dev
-# The frontend should start on port 5173.
-\`\`\`
+```
 
-Navigate to `http://localhost:5173` in your browser.
+Frontend default: `http://localhost:5173`
 
----
+## Build and Lint
 
-## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Frontend scripts (`package.json` in repo root):
+
+- `npm run dev`
+- `npm run build`
+- `npm run preview`
+- `npm run lint`
+
+Backend scripts (`server/package.json`):
+
+- `npm run start`
+- `npm run dev`
+
+## Security Characteristics
+
+- Login/register rate limiting at `10 requests / 15 minutes / IP`
+- Refresh token rotation with DB invalidation of previous token
+- Refresh tokens hashed with SHA-256 before persistence
+- Access token required for all protected routes (`Authorization: Bearer ...`)
+- Cookies configured as `httpOnly`, `sameSite: 'Strict'`, and `secure` in production
+
+## Known Codebase Notes
+
+- Active backend data layer is PostgreSQL (`server/config/db.js`, services with SQL).
+- `server/models/*.js`, `server/services/alertService.js`, and `server/services/emailService.js` contain legacy Mongo/Mongoose-era code and are not used in current route wiring.
+- `server/validators/billValidators.js` is legacy shape and currently not mounted by bill routes.
+- Frequency naming is standardized as `yearly` in active SQL/services, while some legacy files still reference `annual`.
+- `src/pages/SettingsPage.jsx` "Security" form UI is present, but password update flow is not wired to collect and submit real values yet.
+- Frontend label `system` theme appears in UI, but `ThemeContext` currently toggles only between `dark` and `light`.
+
+## Suggested Next Hardening Tasks
+
+1. Normalize all API error responses to one envelope (`{ success, data, error }` or equivalent).
+2. Remove or archive unused Mongo-era files to reduce maintenance risk.
+3. Add integration tests for auth refresh queueing and payment transaction atomicity.
+4. Wire Settings security panel to `PATCH /api/auth/password` with validation and success/error UX.
+5. Add migration version tracking strategy if schema evolves beyond `001_init.sql`.
